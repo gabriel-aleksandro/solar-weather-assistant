@@ -1,0 +1,11 @@
+# ChromaDB — commitar para deploy no Render (necessario em producao)
+# Para reindexar localmente: python src/ingest.py
+# .chroma/
+
+__pycache__/
+*.py[cod]
+.env
+.venv/
+venv/
+*.egg-info/
+.DS_Store
