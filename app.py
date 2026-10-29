@@ -112,7 +112,6 @@ with gr.Blocks(
         ),
         examples=EXAMPLES,
         cache_examples=False,
-        clear_btn="Limpar conversa"
     )
 
     gr.Markdown(
