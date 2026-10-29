@@ -112,8 +112,7 @@ with gr.Blocks(
         ),
         examples=EXAMPLES,
         cache_examples=False,
-        undo_btn="Desfazer",
-        clear_btn="Limpar conversa",
+        clear_btn="Limpar conversa"
     )
 
     gr.Markdown(
