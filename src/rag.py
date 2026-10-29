@@ -21,7 +21,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_groq import ChatGroq
 
 CHROMA_DIR  = Path(__file__).resolve().parent.parent / ".chroma"
-GROQ_MODEL  = "llama-3.3-70b-versatile"
+GROQ_MODEL  = "llama3-70b-8192"
 N_RESULTS   = 5
 
 SYSTEM_PROMPT = """You are a helpful scientific assistant specializing in solar physics \
