@@ -9,7 +9,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from langchain_huggingface import HuggingFaceEndpointEmbeddings
+from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
 from langchain_chroma import Chroma
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
@@ -48,11 +48,11 @@ def build_chain():
     if not hf_token:
         raise RuntimeError("Defina a variável de ambiente HF_TOKEN.")
 
-    # Inference API do HF — sem carregar modelo localmente (economiza ~300MB de RAM)
-    embeddings = HuggingFaceEndpointEmbeddings(
-        model=f"https://api-inference.huggingface.co/models/{EMBEDDING_MODEL}",
-        huggingfacehub_api_token=hf_token,
+    embeddings = HuggingFaceInferenceAPIEmbeddings(
+    api_key=hf_token,
+    model_name=EMBEDDING_MODEL,
     )
+
     vectorstore = Chroma(
         persist_directory=str(CHROMA_DIR),
         embedding_function=embeddings,
