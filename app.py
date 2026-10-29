@@ -112,7 +112,6 @@ with gr.Blocks(
         ),
         examples=EXAMPLES,
         cache_examples=False,
-        retry_btn=None,
         undo_btn="Desfazer",
         clear_btn="Limpar conversa",
     )
