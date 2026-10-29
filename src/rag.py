@@ -9,7 +9,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
@@ -48,9 +48,9 @@ def build_chain():
     if not hf_token:
         raise RuntimeError("Defina a variável de ambiente HF_TOKEN.")
 
-    embeddings = HuggingFaceInferenceAPIEmbeddings(
-    api_key=hf_token,
+    embeddings = HuggingFaceEmbeddings(
     model_name=EMBEDDING_MODEL,
+    model_kwargs={"device": "cpu"},
     )
 
     vectorstore = Chroma(
