@@ -53,7 +53,7 @@ except Exception as e:
 # --------------------------------------------------------------------------- #
 
 EXAMPLES = [
-    "O que é TSS e por que é usado em previsão de flares solares?",
+    "O que é True Skill Statistic (TSS) e por que é usado em previsão de flares solares?",
     "Qual é a diferença entre flare solar e ejeção de massa coronal (CME)?",
     "Como o HARPNUM é usado para evitar data leakage na validação cruzada?",
     "Qual catálogo foi usado para associar CMEs a regiões ativas no SWAN-SF?",
