@@ -2,6 +2,7 @@
 ingest.py
 =========
 Indexa documentos da pasta docs/ no ChromaDB (persistente em .chroma/).
+Embeddings via chromadb.utils.embedding_functions (onnxruntime, sem torch).
 
 Uso:
     python src/ingest.py
@@ -11,13 +12,15 @@ Suporta: PDF, Markdown (.md), texto (.txt)
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
+from typing import List
 
+import chromadb
+from chromadb.utils import embedding_functions
 from langchain_community.document_loaders import PyPDFLoader, TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
+from langchain_core.embeddings import Embeddings
 
 DOCS_DIR   = Path(__file__).resolve().parent.parent / "docs"
 CHROMA_DIR = Path(__file__).resolve().parent.parent / ".chroma"
@@ -25,8 +28,21 @@ CHROMA_DIR = Path(__file__).resolve().parent.parent / ".chroma"
 CHUNK_SIZE    = 800
 CHUNK_OVERLAP = 100
 
-# Modelo de embedding leve, roda CPU, sem API key
-EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+
+class ChromaOnnxEmbeddings(Embeddings):
+    """
+    Wrapper LangChain-compatível em volta da DefaultEmbeddingFunction do ChromaDB.
+    Usa all-MiniLM-L6-v2 via onnxruntime — sem torch, sem HuggingFace runtime.
+    """
+
+    def __init__(self):
+        self._fn = embedding_functions.DefaultEmbeddingFunction()
+
+    def embed_documents(self, texts: List[str]) -> List[List[float]]:
+        return self._fn(texts)
+
+    def embed_query(self, text: str) -> List[float]:
+        return self._fn([text])[0]
 
 
 def load_documents():
@@ -58,10 +74,14 @@ def ingest():
     print(f"  -> {len(chunks)} chunks gerados.")
 
     print("[3/3] Gerando embeddings e salvando no ChromaDB ...")
-    embeddings = HuggingFaceEmbeddings(
-        model_name=EMBEDDING_MODEL,
-        model_kwargs={"device": "cpu"},
-    )
+    embeddings = ChromaOnnxEmbeddings()
+
+    # Remove índice antigo se existir (evita conflito de dimensões)
+    import shutil
+    if CHROMA_DIR.exists():
+        shutil.rmtree(CHROMA_DIR)
+        print(f"  (índice antigo removido)")
+
     db = Chroma.from_documents(
         documents=chunks,
         embedding=embeddings,

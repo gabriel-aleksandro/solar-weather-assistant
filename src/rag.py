@@ -2,25 +2,27 @@
 rag.py
 ======
 Pipeline RAG: recupera chunks relevantes do ChromaDB e gera resposta via Groq.
+Embeddings via chromadb.utils.embedding_functions (onnxruntime, sem torch).
 """
 
 from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import List
 
-from langchain_huggingface import HuggingFaceEmbeddings
+import chromadb
+from chromadb.utils import embedding_functions
 from langchain_chroma import Chroma
+from langchain_core.embeddings import Embeddings
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from langchain_groq import ChatGroq
 
-CHROMA_DIR      = Path(__file__).resolve().parent.parent / ".chroma"
-# Usa a Inference API do HF — sem carregar modelo em RAM
-EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
-GROQ_MODEL      = "llama-3.3-70b-versatile"
-N_RESULTS       = 5   # chunks recuperados por consulta
+CHROMA_DIR  = Path(__file__).resolve().parent.parent / ".chroma"
+GROQ_MODEL  = "llama-3.3-70b-versatile"
+N_RESULTS   = 5
 
 SYSTEM_PROMPT = """You are a helpful scientific assistant specializing in solar physics \
 and space weather. You answer questions about solar flares, coronal mass ejections (CMEs), \
@@ -38,20 +40,35 @@ Context:
 HUMAN_PROMPT = "{question}"
 
 
+class ChromaOnnxEmbeddings(Embeddings):
+    """
+    Wrapper LangChain-compatível em volta da DefaultEmbeddingFunction do ChromaDB.
+    Usa all-MiniLM-L6-v2 via onnxruntime — sem torch, sem HuggingFace runtime.
+    """
+
+    def __init__(self):
+        self._fn = embedding_functions.DefaultEmbeddingFunction()
+
+    def embed_documents(self, texts: List[str]) -> List[List[float]]:
+        return self._fn(texts)
+
+    def embed_query(self, text: str) -> List[float]:
+        return self._fn([text])[0]
+
+
 def build_chain():
     """Constrói e retorna a chain RAG (chamada uma vez na inicialização do app)."""
     groq_api_key = os.environ.get("GROQ_API_KEY")
     if not groq_api_key:
         raise RuntimeError("Defina a variável de ambiente GROQ_API_KEY.")
 
-    hf_token = os.environ.get("HF_TOKEN")
-    if not hf_token:
-        raise RuntimeError("Defina a variável de ambiente HF_TOKEN.")
+    if not CHROMA_DIR.exists():
+        raise FileNotFoundError(
+            f"Índice ChromaDB não encontrado em {CHROMA_DIR}. "
+            "Execute `python src/ingest.py` antes de iniciar o app."
+        )
 
-    embeddings = HuggingFaceEmbeddings(
-    model_name=EMBEDDING_MODEL,
-    model_kwargs={"device": "cpu"},
-    )
+    embeddings = ChromaOnnxEmbeddings()
 
     vectorstore = Chroma(
         persist_directory=str(CHROMA_DIR),

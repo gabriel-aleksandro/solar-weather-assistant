@@ -1,6 +1,5 @@
-# ChromaDB — commitar para deploy no Render (necessario em producao)
-# Para reindexar localmente: python src/ingest.py
-# .chroma/
+# ChromaDB — gerado automaticamente no startup do Render (ingest.py)
+.chroma/
 
 __pycache__/
 *.py[cod]
