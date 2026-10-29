@@ -9,7 +9,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEndpointEmbeddings
 from langchain_chroma import Chroma
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
@@ -17,6 +17,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_groq import ChatGroq
 
 CHROMA_DIR      = Path(__file__).resolve().parent.parent / ".chroma"
+# Usa a Inference API do HF — sem carregar modelo em RAM
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 GROQ_MODEL      = "llama-3.3-70b-versatile"
 N_RESULTS       = 5   # chunks recuperados por consulta
@@ -43,9 +44,14 @@ def build_chain():
     if not groq_api_key:
         raise RuntimeError("Defina a variável de ambiente GROQ_API_KEY.")
 
-    embeddings = HuggingFaceEmbeddings(
-        model_name=EMBEDDING_MODEL,
-        model_kwargs={"device": "cpu"},
+    hf_token = os.environ.get("HF_TOKEN")
+    if not hf_token:
+        raise RuntimeError("Defina a variável de ambiente HF_TOKEN.")
+
+    # Inference API do HF — sem carregar modelo localmente (economiza ~300MB de RAM)
+    embeddings = HuggingFaceEndpointEmbeddings(
+        model=f"https://api-inference.huggingface.co/models/{EMBEDDING_MODEL}",
+        huggingfacehub_api_token=hf_token,
     )
     vectorstore = Chroma(
         persist_directory=str(CHROMA_DIR),

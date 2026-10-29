@@ -7,4 +7,6 @@ services:
     envVars:
       - key: GROQ_API_KEY
         sync: false        # definido manualmente no dashboard do Render
+      - key: HF_TOKEN
+        sync: false        # token gratuito em hf.co/settings/tokens
     autoDeploy: true
